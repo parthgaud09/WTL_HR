@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  skills TEXT NOT NULL DEFAULT '',
+  min_experience REAL NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS candidates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  skills TEXT NOT NULL DEFAULT '',
+  experience REAL NOT NULL DEFAULT 0,
+  resume_text TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'New' CHECK(status IN ('New','Review','Interview','Rejected','Hired')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_candidate_email ON candidates(email);
