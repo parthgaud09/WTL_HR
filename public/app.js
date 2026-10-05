@@ -1,4 +1,3 @@
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let jobs=[],candidates=[],interviews=[],currentCandidate=null;
 const statuses=['New','Review','Interview','Rejected','Hired'];
 async function api(url,options){const r=await fetch(url,options),data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');return data}
@@ -17,7 +16,21 @@ function renderInterviews(){const box=$('#interviewList');box.replaceChildren();
 function renderRoles(){const box=$('#roleList');box.replaceChildren();if(!jobs.length)return empty(box,'No roles added yet.');jobs.forEach(j=>{const row=el('article','','listItem');row.append(el('h3',j.title),el('p',`Required skills: ${j.skills||'None specified'} · ${j.min_experience} years minimum`),el('p',j.description));box.append(row)})}
 async function renderRanking(){const box=$('#ranking'),id=$('#jobSelect').value;if(!id)return empty(box,'Add or select a role to see candidate matches.');try{const ranked=(await api('/api/jobs/'+encodeURIComponent(id)+'/rank')).ranking;box.replaceChildren();if(!ranked.length)return empty(box,'Add candidates to see the shortlist.');ranked.forEach(c=>{const card=el('article','','matchCard'),info=el('div');info.append(el('h3',c.name),el('p',`${c.experience} years · ${c.status}`));const tags=el('div');c.matched.forEach(t=>tags.append(el('span','✓ '+t,'pill')));c.missing.forEach(t=>tags.append(el('span','Missing: '+t,'pill missing')));info.append(tags);const side=el('div','','actions'),score=el('strong',c.score+'%','score'),view=el('button','View profile','secondary');view.addEventListener('click',()=>openProfile(c.id));side.append(score,view);card.append(info,side);box.append(card)})}catch(e){notice(e.message,true)}}
 async function renderComparison(){const box=$('#comparison'),jobId=$('#compareJob').value,a=$('#compareA').value,b=$('#compareB').value;if(!jobId||!a||!b)return empty(box,'Select a role and two candidates to compare.');if(a===b)return empty(box,'Choose two different candidates.');try{const ranked=(await api('/api/jobs/'+encodeURIComponent(jobId)+'/rank')).ranking;box.replaceChildren();[a,b].forEach(id=>{const c=ranked.find(x=>String(x.id)===id);if(!c)return;const card=el('article','','compareCard');card.append(el('h3',c.name),el('strong',c.score+'% match','score'));[['Current status',c.status],['Experience',c.experience+' years'],['Skills',c.skills||'—'],['Matched skills',c.matched.join(', ')||'None'],['Missing skills',c.missing.join(', ')||'None'],['Recruiter notes',c.notes||'—']].forEach(([label,value])=>{const row=el('div','','detail');row.append(el('strong',label),el('p',value));card.append(row)});const view=el('button','View full profile','secondary');view.addEventListener('click',()=>openProfile(c.id));card.append(view);box.append(card)})}catch(e){notice(e.message,true)}}
-function attach(formId,endpoint){$(formId).addEventListener('submit',async e=>{e.preventDefault();try{await api(endpoint,json('POST',Object.fromEntries(new FormData(e.currentTarget))));e.currentTarget.reset();await refresh();notice('Saved successfully.')}catch(err){notice(err.message,true)}})}
-attach('#jobForm','/api/jobs');attach('#candidateForm','/api/candidates');attach('#interviewForm','/api/interviews');
-$('#editCandidateForm').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/candidates/'+currentCandidate,json('PATCH',Object.fromEntries(new FormData(e.currentTarget))));$('#profileDialog').close();await refresh();notice('Profile updated.')}catch(err){notice(err.message,true)}});
-$('#candidateSearch').addEventListener('input',renderCandidates);$('#statusFilter').addEventListener('change',renderCandidates);$('#jobSelect').addEventListener('change',renderRanking);['#compareJob','#compareA','#compareB'].forEach(s=>$(s).addEventListener('change',renderComparison));refresh();
+function attach(formId, endpoint) {
+  $(formId).addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    try {
+      await api(endpoint, json(
+        'POST',
+        Object.fromEntries(new FormData(form))
+      ));
+      form.reset();
+      await refresh();
+      notice('Saved successfully.');
+    } catch (err) {
+      notice(err.message, true);
+    }
+  });
+}
